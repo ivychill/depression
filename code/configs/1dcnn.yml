@@ -1,0 +1,87 @@
+globals:
+  seed: 1213
+  device: cuda
+  num_epochs: 2500
+  output_dir: ../user_data/1dcnn_balance_regularization
+  main_metric: epoch_f1
+  minimize_metric: False
+  input_key: image
+  input_target_key: targets
+  weights:
+  folds:
+    - 0
+
+data:
+  train_df_path: ../../cad/datasets/voice_CHD_metadata2c.csv
+  train_audio_path: ../../cad/datasets/all_feature_sep120050dim
+
+dataset:
+  name: MatDataset
+  sr: 32000
+  img_size: 224
+  params:
+    n_mels: 128
+    fmin: 20
+    fmax: 16000
+
+loss:
+  name: ResNetLoss
+  params:
+    loss_type: ce
+
+optimizer:
+  name: Adam
+  params:
+    lr: 0.001
+
+scheduler:
+  name: CosineAnnealingLR
+  params:
+    T_max: 10
+
+split:
+  name: StratifiedKFold
+  params:
+    n_splits: 5
+    random_state: 42
+    shuffle: True
+
+model:
+  name: OneD_DCNN_attention
+  params:
+    pretrained: True
+#    n_classes: 50
+    n_classes: 52
+
+loader:
+  train:
+#    batch_size: 100
+    batch_size: 128
+    shuffle: True
+    num_workers: 12
+  valid:
+    batch_size: 256
+    shuffle: False
+    num_workers: 12
+  test:
+    batch_size: 1024
+    shuffle: False
+    num_workers: 12
+
+callbacks:
+  - name: F1Callback
+    params:
+#      input_key: targets
+      input_key: id_targets
+#      input_key: gender_targets
+      output_key: logits
+      model_output_key: multiclass_proba
+      prefix: f1
+  - name: mAPCallback
+    params:
+#      input_key: targets
+      input_key: id_targets
+#      input_key: id_targets
+      output_key: logits
+      model_output_key: multiclass_proba
+      prefix: mAP
